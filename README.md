@@ -12,15 +12,7 @@
 * **Język implementacji:** Java.
 * **Sposób realizacji skanera i parsera:** Użycie zewnętrznego generatora skanerów i parserów **ANTLR v4** (narzędzie wygeneruje kod w języku Java na podstawie napisanej przez nas gramatyki).
 
-# Projekt TKiK: Kompilator opisu CV do formatu HTML
-
-## Autorzy
-* **Filip Sobala** (twoj@email.com)
-* **Bartłomiej Przytuła** (bartek@email.com)
-
----
-
-## 1. Założenia Projektu
+## 2. Założenia Projektu
 
 * **Cel:** Tłumaczenie autorskiego tekstu (DSL - Domain Specific Language) na w pełni sformatowaną stronę CV w formacie HTML z wbudowanym stylem CSS.
 * **Rodzaj translatora:** Kompilator.
@@ -30,7 +22,7 @@
 
 ---
 
-## 2. Analiza Leksykalna (Spis Tokenów)
+## 3. Analiza Leksykalna (Spis Tokenów)
 
 Skaner (Lexer) przetwarza plik wejściowy na strumień tokenów według poniższej specyfikacji.
 
@@ -52,7 +44,7 @@ Skaner (Lexer) przetwarza plik wejściowy na strumień tokenów według poniższ
 
 ---
 
-## 3. Analiza Składniowa (Gramatyka)
+## 4. Analiza Składniowa (Gramatyka)
 
 Poniżej przedstawiono logiczną strukturę języka. Parser weryfikuje poprawność ułożenia tokenów w hierarchię.
 
