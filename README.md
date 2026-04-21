@@ -110,6 +110,8 @@ Przykładowy plik tekstowy (.txt), który stanowi wejście dla kompilatora:
 
 ```text
 
+CV_START
+
 CONFIG {
     LANG: "PL"
     THEME: "Modern-Dark"
