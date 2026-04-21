@@ -207,7 +207,7 @@ SECTION Projects {
     OPEN_SOURCE: [
         {
             NAME: "CvDslCompiler"
-            URL: [https://github.com/fsobala/CvDslCompiler](https://github.com/fsobala/CvDslCompiler)
+            URL: https://github.com/fsobala/CvDslCompiler
             IS_ACTIVE: TRUE
             STARS: 128
             DESCRIPTION: """
@@ -223,7 +223,7 @@ SECTION Clauses {
     RODO: """
     Wyrażam zgodę na przetwarzanie moich danych osobowych dla potrzeb niezbędnych 
     do realizacji procesu rekrutacji (zgodnie z ustawą z dnia 10 maja 2018 roku 
-    o ochronie danych osobowych (Dz. Ustaw z 2018, poz. 1000)).
+    o ochronie danych osobowych ).
     """
 }
 
