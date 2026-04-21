@@ -109,14 +109,6 @@ value        : T_STRING
 Przykładowy plik tekstowy (.txt), który stanowi wejście dla kompilatora:
 
 ```text
-/* Główny plik CV - Filip Sobala
-   Demonstracja pełnych możliwości kompilatora DSL
-*/
-CV_START
-
-# Importowanie zewnętrznych zależności (np. czcionek lub dodatkowych stylów)
-IMPORT "assets/fonts.css"
-IMPORT "assets/custom-print-rules.css"
 
 CONFIG {
     LANG: "PL"
@@ -131,9 +123,6 @@ SECTION Personal_Info {
     ROLE: "Senior Java & ANTLR Engineer"
     EMAIL: fsobala@student.agh.edu.pl
     PHONE: +48 123 456 789
-    PORTFOLIO: [https://fsobala.dev](https://fsobala.dev)
-    GITHUB: [https://github.com/fsobala](https://github.com/fsobala)
-    LINKEDIN: [https://linkedin.com/in/fsobala](https://linkedin.com/in/fsobala)
 }
 
 SECTION Profile {
