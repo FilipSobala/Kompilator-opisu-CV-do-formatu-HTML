@@ -30,7 +30,6 @@ Skaner (Lexer) przetwarza plik wejściowy na strumień tokenów.
 | **`T_STRING`** | `\"(.*?)\"` | Dowolna wartość tekstowa ujęta w cudzysłów (wsparcie UTF-8) |
 | **`T_MULTILINE`** | `\"\"\"[\s\S]*?\"\"\"` | Wielowierszowy blok tekstu (do długich opisów stanowisk) |
 | **`T_DATE`** | `[0-9]{4}-[0-9]{2}` | Data w formacie RRRR-MM |
-| **`T_YEAR`** | `[0-9]{4}` | Data w formacie samego roku RRRR |
 | **`T_PRESENT`** | `PRESENT` \| `NOW` | Wartość oznaczająca trwające wydarzenie (np. obecna praca) |
 | **`T_URL`** | `https?://[^\s"']+` | Adres URL (np. do GitHub, LinkedIn, portfolio) |
 | **`T_EMAIL`** | `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}` | Bezpośrednie rozpoznawanie adresu e-mail |
