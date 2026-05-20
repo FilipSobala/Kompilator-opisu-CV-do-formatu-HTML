@@ -1,4 +1,4 @@
-package org.example.cv.antlr;// Generated from CvDsl.g4 by ANTLR 4.13.2
+// Generated from CvDsl.g4 by ANTLR 4.13.2
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;

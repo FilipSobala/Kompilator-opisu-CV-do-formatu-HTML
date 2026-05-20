@@ -1,0 +1,119 @@
+
+CV_START
+
+CONFIG {
+    LANG: "PL"
+    THEME: "Modern-Dark"
+    SHOW_PHOTO: TRUE
+    ACCENT_COLOR: "#4CAF50"
+    EXPORT_PDF: TRUE
+}
+
+SECTION Personal_Info {
+    NAME: "Filip Sobala"
+    ROLE: "Senior Java & ANTLR Engineer"
+    EMAIL: fsobala@student.agh.edu.pl
+    PHONE: +48 123 456 789
+}
+
+SECTION Profile {
+    SUMMARY: """
+    Doświadczony inżynier oprogramowania z pasją do tworzenia języków 
+    dziedzinowych (DSL) oraz narzędzi deweloperskich. Specjalizuję się 
+    w architekturze JVM, gramatykach ANTLR v4 i optymalizacji parserów.
+    Poszukuję wyzwań przy budowie systemów o wysokiej dostępności.
+    """
+}
+
+SECTION Experience {
+    WORK_HISTORY: [
+        {
+            COMPANY: "Google"
+            POSITION: "Software Engineer"
+            START_DATE: 2024-07
+            END_DATE: PRESENT
+            IS_REMOTE: TRUE
+            
+            # Zastosowanie listy wypunktowanej opartej na myślnikach
+            RESPONSIBILITIES: 
+                - "Projektowanie i rozwój wewnętrznych języków konfiguracyjnych."
+                - "Optymalizacja silnika parsowania, redukcja czasu kompilacji o 35%."
+                - "Współpraca z zespołami Cloud Infrastructure."
+                
+            # Zastosowanie klasycznej listy w nawiasach kwadratowych
+            TECH_STACK: ["Java 21", "ANTLR v4", "Spring Boot", "Kubernetes"]
+        },
+        {
+            COMPANY: "Tech Corp Sp. z o.o."
+            POSITION: "Junior Java Developer"
+            START_DATE: 2022-03
+            END_DATE: 2024-06
+            IS_REMOTE: FALSE
+            RESPONSIBILITIES: 
+                - "Utrzymanie systemów legacy opartych na Java EE."
+                - "Migracja monolitu do architektury mikroserwisów."
+                - "Pisanie testów (JUnit 5, Testcontainers)."
+            TECH_STACK: ["Java 11", "PostgreSQL", "Docker"]
+        }
+    ]
+}
+
+SECTION Education {
+    DEGREES: [
+        {
+            UNIVERSITY: "Akademia Górniczo-Hutnicza w Krakowie"
+            FACULTY: "Informatyka, Wydział IET"
+            DEGREE: "Magister Inżynier"
+            START_YEAR: 2021
+            END_YEAR: 2026
+            ACHIEVEMENTS: 
+                - "Stypendium Rektora dla najlepszych studentów"
+                - "Przewodniczący Koła Naukowego Kompilatorów"
+        }
+    ]
+}
+
+SECTION Skills {
+    PROGRAMMING: ["Java", "Kotlin", "Python", "SQL"]
+    TOOLS: ["Git", "Maven", "Gradle", "Docker", "IntelliJ IDEA"]
+    
+    # Ocena umiejętności miękkich i językowych w skali liczbowej (1-5)
+    LANGUAGES: [
+        {
+            LANGUAGE: "Angielski"
+            LEVEL_NAME: "C1 (Advanced)"
+            PROFICIENCY: 5
+        },
+        {
+            LANGUAGE: "Niemiecki"
+            LEVEL_NAME: "A2 (Basic)"
+            PROFICIENCY: 2
+        }
+    ]
+}
+
+SECTION Projects {
+    OPEN_SOURCE: [
+        {
+            NAME: "CvDslCompiler"
+            URL: https://github.com/fsobala/CvDslCompiler
+            IS_ACTIVE: TRUE
+            STARS: 128
+            DESCRIPTION: """
+            Autorski kompilator transformujący pliki tekstowe na gotowe 
+            do druku strony HTML/PDF. Zbudowany na architekturze Visitor.
+            Wspiera walidację semantyczną drzewa AST oraz fail-fast parser.
+            """
+        }
+    ]
+}
+
+SECTION Clauses {
+    RODO: """
+    Wyrażam zgodę na przetwarzanie moich danych osobowych dla potrzeb niezbędnych 
+    do realizacji procesu rekrutacji (zgodnie z ustawą z dnia 10 maja 2018 roku 
+    o ochronie danych osobowych ).
+    """
+}
+
+CV_END
