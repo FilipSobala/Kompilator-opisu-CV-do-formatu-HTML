@@ -26,4 +26,13 @@ public class ObjectNode extends ValueNode {
         sb.append("}");
         return sb.toString();
     }
+    public String toHtml() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div class=\"object\">");
+        for (FieldNode f : fields) {
+            sb.append(f.toHtml());
+        }
+        sb.append("</div>");
+        return sb.toString();
+    }
 }

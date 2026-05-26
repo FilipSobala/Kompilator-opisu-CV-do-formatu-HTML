@@ -2,10 +2,10 @@
 CV_START
 
 CONFIG {
-    LANG: "PL"
-    THEME: "Modern-Dark"
+    LANG: "Pl"
+    THEME: "Dark"
     SHOW_PHOTO: TRUE
-    ACCENT_COLOR: "#4CAF50"
+    ACCENT_COLOR: "#af4c4c"
     EXPORT_PDF: TRUE
 }
 

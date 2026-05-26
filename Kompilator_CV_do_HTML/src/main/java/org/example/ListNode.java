@@ -27,4 +27,14 @@ public class ListNode extends ValueNode {
         sb.append("]");
         return sb.toString();
     }
+    @Override
+    public String toHtml() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<ul>");
+        for (ValueNode item : items) {
+            sb.append("<li>").append(item.toHtml()).append("</li>");
+        }
+        sb.append("</ul>");
+        return sb.toString();
+    }
 }

@@ -4,7 +4,13 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
 import org.example.*;
-import org.example.cv.antlr.*;;
+import org.example.cv.antlr.*;
+
+import org.xhtmlrenderer.pdf.ITextRenderer;
+
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class Main {
 
@@ -26,7 +32,27 @@ public class Main {
         System.out.println("CV");
         System.out.println(cv);
 
-        System.out.println("\nPARSE TREE");
-        System.out.println(tree.toStringTree(parser));
+        String html = cv.toHtml();
+        Files.writeString(Path.of("output.html"), html);
+        System.out.println("Zapisano output.html");
+
+        boolean exportPdf = cv.getConfig() != null
+                && cv.getConfig().getBooleanField("EXPORT_PDF");
+
+        if (exportPdf) {
+            exportToPdf(html);
+            System.out.println("Zapisano output.pdf");
+        } else {
+            System.out.println("EXPORT_PDF=FALSE — pomijam PDF");
+        }
+    }
+    private static void exportToPdf(String html) throws Exception {
+        ITextRenderer renderer = new ITextRenderer();
+        renderer.setDocumentFromString(html);
+        renderer.layout();
+
+        try (FileOutputStream fos = new FileOutputStream("output.pdf")) {
+            renderer.createPDF(fos);
+        }
     }
 }

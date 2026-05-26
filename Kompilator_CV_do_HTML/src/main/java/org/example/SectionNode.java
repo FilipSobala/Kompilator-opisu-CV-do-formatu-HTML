@@ -28,4 +28,15 @@ public class SectionNode implements Node {
 
         return sb.toString();
     }
+    @Override
+    public String toHtml() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<section id=\"").append(name).append("\">");
+        sb.append("<h2>").append(name.replace("_", " ")).append("</h2>");
+        for (Node n : content) {
+            sb.append(n.toHtml());
+        }
+        sb.append("</section>");
+        return sb.toString();
+    }
 }

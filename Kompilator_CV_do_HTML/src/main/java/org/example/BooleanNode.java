@@ -15,4 +15,8 @@ public class BooleanNode extends ValueNode {
     public String toString() {
         return String.valueOf(value);
     }
+    @Override
+    public String toHtml() {
+        return "<span>" + value + "</span>";
+    }
 }

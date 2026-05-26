@@ -15,4 +15,8 @@ public class StringNode extends ValueNode {
     public String toString() {
         return value;
     }
+    @Override
+    public String toHtml() {
+        return "<span>" + value + "</span>";
+    }
 }

@@ -23,4 +23,9 @@ public class FieldNode implements Node {
     public String toString() {
         return key + " = " + value;
     }
+    @Override
+    public String toHtml() {
+        return "<div class=\"field\"><span class=\"key\">" + key + "</span>"
+                + value.toHtml() + "</div>";
+    }
 }
