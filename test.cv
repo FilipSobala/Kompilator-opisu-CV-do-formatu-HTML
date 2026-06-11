@@ -1,0 +1,77 @@
+CV_START
+
+/* To jest komentarz blokowy */
+
+CONFIG {
+    LANG: "PL"
+    THEME: "Modern-Dark"
+    SHOW_PHOTO: TRUE
+    ACCENT_COLOR: "#4CAF50"
+    EXPORT_PDF: FALSE
+}
+
+SECTION Personal_Info {
+    NAME: "Filip Sobala"
+    ROLE: "Senior Java & ANTLR Engineer"
+    EMAIL: fsobala@student.agh.edu.pl
+    PHONE: +48 123 456 789
+}
+
+SECTION Profile {
+    SUMMARY: """
+    Doświadczony inżynier oprogramowania z pasją do tworzenia języków 
+    dziedzinowych (DSL) oraz narzędzi deweloperskich.
+    """
+}
+
+SECTION Experience {
+    WORK_HISTORY: [
+        {
+            COMPANY: "Google"
+            POSITION: "Software Engineer"
+            START_DATE: 2024-07
+            END_DATE: PRESENT
+            IS_REMOTE: TRUE
+            # To jest komentarz liniowy
+            RESPONSIBILITIES:
+                - "Projektowanie języków konfiguracyjnych."
+                - "Optymalizacja silnika parsowania o 35%."
+            TECH_STACK: ["Java 21", "ANTLR v4", "Spring Boot"]
+        },
+        {
+            COMPANY: "Tech Corp"
+            POSITION: "Junior Java Developer"
+            START_DATE: 2022-03
+            END_DATE: 2024-06
+            IS_REMOTE: FALSE
+            TECH_STACK: ["Java 11", "PostgreSQL", "Docker"]
+        }
+    ]
+}
+
+SECTION Skills {
+    PROGRAMMING: ["Java", "Kotlin", "Python", "SQL"]
+    LANGUAGES: [
+        {
+            LANGUAGE: "Angielski"
+            PROFICIENCY: 5
+        },
+        {
+            LANGUAGE: "Niemiecki"
+            PROFICIENCY: 2
+        }
+    ]
+}
+
+SECTION Projects {
+    OPEN_SOURCE: [
+        {
+            NAME: "CvDslCompiler"
+            URL: https://github.com/fsobala/CvDslCompiler
+            IS_ACTIVE: TRUE
+            STARS: 128
+        }
+    ]
+}
+
+CV_END

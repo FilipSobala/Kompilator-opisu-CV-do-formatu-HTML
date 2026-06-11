@@ -228,3 +228,39 @@ SECTION Clauses {
 
 CV_END
 ```
+
+## 🎨 Podświetlanie składni w VS Code
+
+Repozytorium zawiera rozszerzenie VS Code dodające kolorowanie składni dla plików `.cv`.
+
+### Instalacja (jedna komenda)
+
+1. Sklonuj lub pobierz repozytorium
+2. W terminalu przejdź do folderu z projektem i wpisz:
+
+```bash
+code --install-extension cvdsl/cvdsl-0.0.1.vsix
+```
+
+3. Zrestartuj VS Code
+
+Od tej chwili każdy plik z rozszerzeniem `.cv` będzie automatycznie podświetlany kolorami.
+
+### Co jest podświetlane?
+
+| Element | Przykład |
+| :--- | :--- |
+| Znaczniki dokumentu | `CV_START`, `CV_END` |
+| Słowa kluczowe | `CONFIG`, `SECTION`, `IMPORT` |
+| Klucze pól | `NAME:`, `START_DATE:`, `TECH_STACK:` |
+| Nazwy sekcji | `Personal_Info`, `Experience` |
+| Wartości logiczne | `TRUE`, `FALSE` |
+| Wartości specjalne | `PRESENT`, `NOW` |
+| Stringi | `"Filip Sobala"` |
+| Bloki wieloliniowe | `"""..."""` |
+| Daty | `2024-07` |
+| Liczby | `128`, `5` |
+| Adresy URL | `https://github.com/...` |
+| Adresy e-mail | `fsobala@student.agh.edu.pl` |
+| Numery telefonu | `+48 123 456 789` |
+| Komentarze | `# komentarz`, `/* blok */` |

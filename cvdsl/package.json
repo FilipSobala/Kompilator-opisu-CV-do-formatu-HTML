@@ -1,0 +1,25 @@
+{
+  "name": "cvdsl",
+  "displayName": "CvDsl",
+  "description": "Syntax highlighting for CvDsl language",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.120.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "cvdsl",
+      "aliases": ["CvDsl", "cvdsl"],
+      "extensions": [".cv"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "cvdsl",
+      "scopeName": "source.cvdsl",
+      "path": "./syntaxes/cvdsl.tmLanguage.json"
+    }]
+  }
+}
