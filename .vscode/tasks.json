@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Generuj CV z bieżącego pliku",
+      "type": "process",
+      "command": "C:\\Users\\FILIP\\.vscode\\extensions\\oracle.oracle-java-26.0.0\\nbcode\\java\\maven\\bin\\mvn.cmd",
+      "args": [
+        "-q",
+        "compile",
+        "exec:java",
+        "-Dexec.args=${file}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/Kompilator_CV_do_HTML",
+        "env": {
+          "JAVA_HOME": "C:\\Program Files\\Java\\jdk-25"
+        }
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

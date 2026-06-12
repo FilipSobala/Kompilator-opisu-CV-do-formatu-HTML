@@ -16,5 +16,15 @@
         ["{", "}"],
         ["[", "]"],
         ["\"", "\""]
-    ]
+    ],
+    "indentationRules": {
+        "increaseIndentPattern": "[{\\[]\\s*$",
+        "decreaseIndentPattern": "^\\s*[}\\]]"
+    },
+    "folding": {
+        "markers": {
+            "start": "^\\s*\\{",
+            "end": "^\\s*\\}"
+        }
+    }
 }

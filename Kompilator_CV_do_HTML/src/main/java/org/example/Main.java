@@ -1,24 +1,23 @@
 package org.example;
 
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.*;
-
-import org.example.*;
-import org.example.cv.antlr.*;
-
-import org.xhtmlrenderer.pdf.ITextRenderer;
-
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.example.cv.antlr.CvDslLexer;
+import org.example.cv.antlr.CvDslParser;
+import org.xhtmlrenderer.pdf.ITextRenderer;
 
 public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        CharStream input = CharStreams.fromFileName(
-                "src/main/resources/test.txt"
-        );
+        String filePath = args.length > 0 ? args[0] : "src/main/resources/test.cv";
+        CharStream input = CharStreams.fromFileName(filePath);
 
         CvDslLexer lexer = new CvDslLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -33,8 +32,11 @@ public class Main {
         System.out.println(cv);
 
         String html = cv.toHtml();
-        Files.writeString(Path.of("output.html"), html);
+        Path outputPath = Path.of("output.html").toAbsolutePath();
+        Files.writeString(outputPath, html);
         System.out.println("Zapisano output.html");
+
+        java.awt.Desktop.getDesktop().browse(outputPath.toUri());
 
         boolean exportPdf = cv.getConfig() != null
                 && cv.getConfig().getBooleanField("EXPORT_PDF");

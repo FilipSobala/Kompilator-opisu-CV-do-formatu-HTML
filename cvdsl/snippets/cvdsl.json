@@ -1,0 +1,85 @@
+{
+  "Dokument CV": {
+    "prefix": "cvdoc",
+    "body": [
+      "CV_START",
+      "",
+      "CONFIG {",
+      "\tLANG: \"PL\"",
+      "\tTHEME: \"Modern-Dark\"",
+      "\tSHOW_PHOTO: TRUE",
+      "\tACCENT_COLOR: \"#4CAF50\"",
+      "\tEXPORT_PDF: TRUE",
+      "}",
+      "",
+      "$0",
+      "",
+      "CV_END"
+    ],
+    "description": "Szkielet całego dokumentu CV"
+  },
+
+  "Sekcja": {
+    "prefix": "section",
+    "body": [
+      "SECTION ${1:Name} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Nowa sekcja"
+  },
+
+  "Pole tekstowe": {
+    "prefix": "field",
+    "body": "${1:KEY}: \"${2:value}\"",
+    "description": "Pole klucz-wartość (string)"
+  },
+
+  "Lista wypunktowana": {
+    "prefix": "bullets",
+    "body": [
+      "${1:KEY}:",
+      "\t- \"${2:item}\"",
+      "\t- \"$0\""
+    ],
+    "description": "Lista wypunktowana (bullet list)"
+  },
+
+  "Lista obiektów": {
+    "prefix": "objlist",
+    "body": [
+      "${1:KEY}: [",
+      "\t{",
+      "\t\t$0",
+      "\t}",
+      "]"
+    ],
+    "description": "Lista obiektów w nawiasach kwadratowych"
+  },
+
+  "Blok wieloliniowy": {
+    "prefix": "multiline",
+    "body": [
+      "${1:KEY}: \"\"\"",
+      "$0",
+      "\"\"\""
+    ],
+    "description": "Tekst wieloliniowy"
+  },
+
+  "Wpis doświadczenia": {
+    "prefix": "experience",
+    "body": [
+      "{",
+      "\tCOMPANY: \"${1:Firma}\"",
+      "\tPOSITION: \"${2:Stanowisko}\"",
+      "\tSTART_DATE: ${3:2024-01}",
+      "\tEND_DATE: ${4:PRESENT}",
+      "\tIS_REMOTE: ${5:TRUE}",
+      "\tRESPONSIBILITIES:",
+      "\t\t- \"$0\"",
+      "}"
+    ],
+    "description": "Jeden wpis doświadczenia zawodowego"
+  }
+}

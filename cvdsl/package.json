@@ -20,6 +20,10 @@
       "language": "cvdsl",
       "scopeName": "source.cvdsl",
       "path": "./syntaxes/cvdsl.tmLanguage.json"
+    }],
+    "snippets": [{
+      "language": "cvdsl",
+      "path": "./snippets/cvdsl.json"
     }]
   }
 }

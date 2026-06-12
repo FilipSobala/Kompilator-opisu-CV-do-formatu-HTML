@@ -4,6 +4,8 @@
 * **Filip Sobala** fsobala@student.agh.edu.pl
 * **Bartłomiej Przytuła** bartprzyt@student.agh.edu.pl
 
+# CvDsl — Autorski język opisu CV
+
 ## 1. Założenia Projektu
 
 * **Cel:** Tłumaczenie autorskiego formatu opisu CV (DSL) na nowoczesną stronę HTML z wbudowanymi stylami CSS.
@@ -11,6 +13,137 @@
 * **Język implementacji:** Java.
 * **Narzędzia:** Generator parserów **ANTLR v4**.
 * **Główny atut:** Generowanie pojedynczego, gotowego do druku (PDF) pliku .html, który jest całkowicie niezależny od zewnętrznych plików stylów.
+
+---
+
+## 🛠️ Środowisko developerskie — co dodaliśmy do projektu
+
+Oprócz samego kompilatora (Lexer/Parser/Visitor generowanych przez ANTLR), w ramach projektu stworzyliśmy **kompletne środowisko pracy w VS Code** dla języka CvDsl. Składa się ono z dwóch niezależnych elementów:
+
+1. **Własne rozszerzenie VS Code (`cvdsl`)** — instalowane jednorazowo, daje edytorowi "świadomość" języka CvDsl (kolory, wcięcia, szablony).
+2. **Automatyzacja budowy (Maven Task)** — wbudowana w projekt, pozwala jednym poleceniem skompilować i podglądnąć CV.
+
+Razem dają efekt: piszesz `.cv` z pełnym kolorowaniem i podpowiedziami → jedno polecenie → gotowy HTML/PDF otwiera się sam w przeglądarce.
+
+---
+
+## 🎨 Część 1 — Rozszerzenie VS Code dla języka CvDsl
+
+Stworzyliśmy od zera (generatorem `yo code`) dedykowane rozszerzenie VS Code o identyfikatorze `cvdsl`, rozpoznające pliki z rozszerzeniem **`.cv`**.
+
+### Instalacja (jedna komenda)
+
+1. Sklonuj lub pobierz repozytorium
+2. W terminalu przejdź do folderu z projektem i wpisz:
+
+```bash
+code --install-extension cvdsl/cvdsl-0.0.1.vsix
+```
+
+3. Zrestartuj VS Code
+
+Od tej chwili każdy plik `.cv` jest automatycznie rozpoznawany jako język "CvDsl" (widać to w prawym dolnym rogu edytora).
+
+### 1.1 Podświetlanie składni (syntax highlighting)
+
+Najważniejsza funkcjonalność — pełne kolorowanie tokenów, **zgodne 1:1 z gramatyką ANTLR** zdefiniowaną w `CvDsl.g4`. Każdy typ tokenu z lexera dostał odpowiadający mu kolor:
+
+| Element języka | Przykład w kodzie | Token z gramatyki |
+| :--- | :--- | :--- |
+| Znaczniki dokumentu | `CV_START`, `CV_END` | `T_START`, `T_END` |
+| Słowa kluczowe | `CONFIG`, `SECTION`, `IMPORT` | `T_CONFIG`, `T_SECTION`, `T_IMPORT` |
+| Nazwy sekcji | `Personal_Info`, `Experience` | `T_LABEL` |
+| Klucze pól | `NAME:`, `START_DATE:`, `TECH_STACK:` | `T_KEY` |
+| Stringi | `"Filip Sobala"` | `T_STRING` |
+| Bloki wieloliniowe | `"""..."""` | `T_MULTILINE` |
+| Wartości logiczne | `TRUE`, `FALSE` | `T_BOOLEAN` |
+| Wartości specjalne | `PRESENT`, `NOW` | `T_PRESENT` |
+| Daty | `2024-07` | `T_DATE` |
+| Liczby | `128`, `5` | `T_NUMBER` |
+| Adresy URL | `https://github.com/...` | `T_URL` |
+| Adresy e-mail | `fsobala@student.agh.edu.pl` | `T_EMAIL` |
+| Numery telefonu | `+48 123 456 789` | `T_PHONE` |
+| Komentarze liniowe | `# komentarz` | `T_COMMENT` |
+| Komentarze blokowe | `/* blok */` | `T_BLOCK_COMM` |
+| Nawiasy / separatory | `{ } [ ] , -` | `T_LBRACE`, `T_RBRACE`, `T_LSQUARE`, `T_RSQUARE`, `T_COMMA`, `T_DASH` |
+
+**Efekt praktyczny:** plik `.cv` wygląda teraz jak kod w "prawdziwym" języku programowania — od razu widać strukturę dokumentu, łatwo zauważyć literówkę w słowie kluczowym (inny kolor = błąd), a stringi, daty i e-maile wyraźnie się wyróżniają.
+
+### 1.2 Konfiguracja edytora (language-configuration.json)
+
+Plik `language-configuration.json` definiuje, jak edytor zachowuje się podczas pisania w `.cv`:
+
+* **Automatyczne zamykanie nawiasów** — wpisanie `{`, `[` lub `"` automatycznie dodaje domykający znak (`}`, `]`, `"`)
+* **Automatyczne wcięcia** — naciśnięcie Enter po `{` lub `[` przesuwa kursor o tabulator, a po `}`/`]` zmniejsza wcięcie — dzięki temu struktura `SECTION { ... }` i listy `[ ... ]` formatują się same, tak jak w JSON
+* **Zwijanie bloków (code folding)** — przy każdej linii zawierającej `{` pojawia się strzałka pozwalająca zwinąć cały blok (np. całą `SECTION Experience { ... }`), co bardzo pomaga przy długich CV z wieloma sekcjami
+* **Komentowanie `Ctrl+/`** — zaznaczenie linii i `Ctrl+/` wstawia/usuwa `#` na początku — działa identycznie jak w Pythonie, zgodnie z `T_COMMENT` z gramatyki
+* **Komentarze blokowe `/* */`** — wspierane jako alternatywa dla dłuższych notatek (`T_BLOCK_COMM`)
+
+### 1.3 Snippety — szablony przyspieszające pisanie CV
+
+Plik `snippets/cvdsl.json` zawiera gotowe szablony. Wpisujesz **prefix** i naciskasz `Tab`, a VS Code wstawia od razu całą strukturę z polami do wypełnienia (kursor przeskakuje między nimi po `Tab`):
+
+| Prefix | Co generuje | Przykładowe zastosowanie |
+| :--- | :--- | :--- |
+| `cvdoc` | Szkielet całego dokumentu: `CV_START`, blok `CONFIG { ... }` z domyślnymi ustawieniami (motyw, kolor akcentu, eksport PDF) i `CV_END` | Start nowego pliku CV od zera |
+| `section` | `SECTION ${Name} { }` | Dodanie nowej sekcji (np. `Education`, `Hobbies`) |
+| `field` | `KEY: "value"` | Pojedyncze pole tekstowe, np. `ROLE: "Backend Developer"` |
+| `bullets` | Lista wypunktowana z myślnikami (`- "..."`) | Lista obowiązków, osiągnięć |
+| `objlist` | `KEY: [ { } ]` — lista obiektów w nawiasach kwadratowych | Tablica `WORK_HISTORY`, `DEGREES`, `LANGUAGES` |
+| `multiline` | Blok `""" """` | Dłuższy opis (np. `SUMMARY`, `DESCRIPTION`, `RODO`) |
+| `experience` | Cały gotowy obiekt doświadczenia zawodowego: `COMPANY`, `POSITION`, `START_DATE`, `END_DATE`, `IS_REMOTE`, `RESPONSIBILITIES` (lista myślnikowa) | Jednym ruchem dodajesz kompletny wpis do `WORK_HISTORY` |
+
+**Efekt praktyczny:** napisanie kompletnego wpisu o pracy (firma, stanowisko, daty, lista obowiązków) to wpisanie `experience` + `Tab` + wypełnienie kilku pól przez `Tab`, zamiast ręcznego pisania kilkunastu linii ze znakami `{`, `}`, `"`, `-`.
+
+---
+
+## ⚙️ Część 2 — Automatyzacja: generowanie CV jednym klawiszem
+
+Drugi element środowiska to **VS Code Task**, który łączy edycję pliku `.cv` z kompilatorem napisanym w Javie — bez ręcznego wpisywania komend w terminalu i bez edytowania ścieżek w kodzie.
+
+### Jak to wygląda w użyciu?
+
+1. Otwórz w VS Code dowolny plik `.cv` (np. `test.cv`) i ustaw go jako aktywną zakładkę
+2. Naciśnij `Ctrl+Shift+P` → wpisz **`Run Task`** → wybierz **„Generuj CV z bieżącego pliku”**
+3. Maven kompiluje projekt i odpala `Main.java` z argumentem będącym ścieżką do **aktualnie otwartego pliku** (`${file}`)
+4. Kompilator:
+   - parsuje plik (Lexer + Parser + Visitor z ANTLR)
+   - generuje `output.html`
+   - jeśli w `CONFIG` ustawiono `EXPORT_PDF: TRUE` — generuje też `output.pdf`
+5. **`output.html` automatycznie otwiera się w domyślnej przeglądarce** — bez klikania w plik w eksploratorze
+
+### Co zostało do tego zmienione w kodzie projektu?
+
+| Plik | Zmiana | Dlaczego |
+| :--- | :--- | :--- |
+| `Main.java` | Ścieżka pliku wejściowego brana jest z argumentu programu: `args.length > 0 ? args[0] : "src/main/resources/test.cv"` | Pozwala kompilatorowi przetwarzać **dowolny** plik `.cv`, a nie tylko jeden zahardkodowany |
+| `Main.java` | Po zapisie `output.html` dodano `Desktop.getDesktop().browse(outputPath.toUri())` | Automatyczne otwarcie wyniku w przeglądarce — bez tego trzeba było ręcznie szukać pliku w eksploratorze |
+| `pom.xml` | Dodano plugin `org.codehaus.mojo:exec-maven-plugin` z ustawioną klasą główną `org.example.Main` | Pozwala odpalić `Main` jedną komendą Mavena (`mvn compile exec:java -Dexec.args=...`), bez ręcznego budowania classpath |
+| `.vscode/tasks.json` | Nowy task **„Generuj CV z bieżącego pliku”**, typ `process`, wywołujący `mvn.cmd` z `-Dexec.args=${file}` | Spina wszystko w jedną akcję dostępną z palety komend (`Ctrl+Shift+P` → `Run Task`) |
+
+### Wymagania / konfiguracja workspace
+
+Aby task był widoczny w VS Code, jako **główny folder okna** (workspace root) musi być otwarty folder nadrzędny:
+
+```
+Kompilator-opisu-CV-do-formatu-HTML/
+├── .vscode/              ← tu jest tasks.json
+├── cvdsl/                ← rozszerzenie VS Code
+└── Kompilator_CV_do_HTML/ ← projekt Java/Maven (pom.xml, src, Main.java)
+```
+
+(folder zawierający i `cvdsl`, i `Kompilator_CV_do_HTML`)
+
+---
+
+## 📋 Ściągawka na prezentację — co warto pokazać
+
+1. **Otworzyć plik `.cv`** → pokazać kolorowanie (porównać np. z plikiem `.txt` — bez kolorów)
+2. **Napisać nową sekcję snippetem** — wpisać `section` + `Tab`, albo `experience` + `Tab` i pokazać jak szybko wypełnia się strukturę
+3. **Zwinąć/rozwinąć sekcję** — kliknąć strzałkę foldingu przy `SECTION ... {`
+4. **Zakomentować linię** `Ctrl+/` — pokazać że wstawia `#` (zgodnie z `T_COMMENT` z gramatyki)
+5. **Odpalić task „Generuj CV z bieżącego pliku”** → poczekać aż Maven skompiluje → przeglądarka sama otworzy `output.html`
+6. (Opcjonalnie) zmienić coś w `.cv` (np. `ACCENT_COLOR`), ponownie odpalić task i pokazać że HTML się zaktualizował
 
 ---
 
@@ -228,39 +361,3 @@ SECTION Clauses {
 
 CV_END
 ```
-
-## 🎨 Podświetlanie składni w VS Code
-
-Repozytorium zawiera rozszerzenie VS Code dodające kolorowanie składni dla plików `.cv`.
-
-### Instalacja (jedna komenda)
-
-1. Sklonuj lub pobierz repozytorium
-2. W terminalu przejdź do folderu z projektem i wpisz:
-
-```bash
-code --install-extension cvdsl/cvdsl-0.0.1.vsix
-```
-
-3. Zrestartuj VS Code
-
-Od tej chwili każdy plik z rozszerzeniem `.cv` będzie automatycznie podświetlany kolorami.
-
-### Co jest podświetlane?
-
-| Element | Przykład |
-| :--- | :--- |
-| Znaczniki dokumentu | `CV_START`, `CV_END` |
-| Słowa kluczowe | `CONFIG`, `SECTION`, `IMPORT` |
-| Klucze pól | `NAME:`, `START_DATE:`, `TECH_STACK:` |
-| Nazwy sekcji | `Personal_Info`, `Experience` |
-| Wartości logiczne | `TRUE`, `FALSE` |
-| Wartości specjalne | `PRESENT`, `NOW` |
-| Stringi | `"Filip Sobala"` |
-| Bloki wieloliniowe | `"""..."""` |
-| Daty | `2024-07` |
-| Liczby | `128`, `5` |
-| Adresy URL | `https://github.com/...` |
-| Adresy e-mail | `fsobala@student.agh.edu.pl` |
-| Numery telefonu | `+48 123 456 789` |
-| Komentarze | `# komentarz`, `/* blok */` |
