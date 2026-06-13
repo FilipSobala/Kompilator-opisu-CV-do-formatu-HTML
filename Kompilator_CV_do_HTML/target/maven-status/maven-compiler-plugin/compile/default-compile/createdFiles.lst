@@ -2,6 +2,7 @@ CvDslParser$ContentContext.class
 CvDslParser$Object_blockContext.class
 CvDslParser$List_fieldContext.class
 org\example\BooleanNode.class
+org\example\CvErrorListener.class
 CvDslParser$Cv_documentContext.class
 CvDslVisitor.class
 org\example\SectionNode.class

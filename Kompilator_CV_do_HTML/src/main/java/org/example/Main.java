@@ -20,21 +20,31 @@ public class Main {
         CharStream input = CharStreams.fromFileName(filePath);
 
         CvDslLexer lexer = new CvDslLexer(input);
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(new CvErrorListener(filePath));
+
         CommonTokenStream tokens = new CommonTokenStream(lexer);
 
         CvDslParser parser = new CvDslParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(new CvErrorListener(filePath));
+
         ParseTree tree = parser.cv_document();
 
-        CvBuilder builder = new CvBuilder();
+        CvBuilder builder = new CvBuilder(filePath);
         Cv cv =(Cv) builder.visit(tree);
 
         System.out.println("CV");
         System.out.println(cv);
 
         String html = cv.toHtml();
-        Path outputPath = Path.of("output.html").toAbsolutePath();
+
+        String baseName = Path.of(filePath).getFileName().toString().replaceFirst("\\.cv$", "");
+        String outputName = "output_" + baseName + ".html";
+
+        Path outputPath = Path.of(outputName).toAbsolutePath();
         Files.writeString(outputPath, html);
-        System.out.println("Zapisano output.html");
+        System.out.println("Zapisano " + outputName);
 
         java.awt.Desktop.getDesktop().browse(outputPath.toUri());
 
@@ -42,18 +52,19 @@ public class Main {
                 && cv.getConfig().getBooleanField("EXPORT_PDF");
 
         if (exportPdf) {
-            exportToPdf(html);
-            System.out.println("Zapisano output.pdf");
+            String pdfName = "output_" + baseName + ".pdf";
+            exportToPdf(html, pdfName);
+            System.out.println("Zapisano " + pdfName);
         } else {
             System.out.println("EXPORT_PDF=FALSE — pomijam PDF");
         }
     }
-    private static void exportToPdf(String html) throws Exception {
+    private static void exportToPdf(String html, String pdfName) throws Exception {
         ITextRenderer renderer = new ITextRenderer();
         renderer.setDocumentFromString(html);
         renderer.layout();
 
-        try (FileOutputStream fos = new FileOutputStream("output.pdf")) {
+        try (FileOutputStream fos = new FileOutputStream(pdfName)) {
             renderer.createPDF(fos);
         }
     }

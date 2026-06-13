@@ -1,9 +1,20 @@
 package org.example;
 
-import org.example.cv.antlr.*;
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.example.cv.antlr.CvDslBaseVisitor;
+import org.example.cv.antlr.CvDslParser;
 
 public class CvBuilder extends CvDslBaseVisitor<Node> {
+
+    private final String filePath;
+    private final Set<String> sectionNames = new HashSet<>();
+
+    public CvBuilder(String filePath) {
+        this.filePath = filePath;
+    }
+
     @Override
     public Node visitCv_document(CvDslParser.Cv_documentContext ctx) {
 
@@ -13,6 +24,10 @@ public class CvBuilder extends CvDslBaseVisitor<Node> {
             cv.setConfig((ConfigNode) visit(ctx.config_block()));
         }
         for (CvDslParser.SectionContext s : ctx.section()) {
+            String name = s.T_LABEL().getText();
+            if (!sectionNames.add(name)) {
+                reportError(s, "Zduplikowana sekcja: \"" + name + "\"");
+            }
             cv.addSection((SectionNode) visit(s));
         }
 
@@ -32,14 +47,48 @@ public class CvBuilder extends CvDslBaseVisitor<Node> {
     @Override
     public Node visitSection(CvDslParser.SectionContext ctx) {
 
-        SectionNode section = new SectionNode(ctx.T_LABEL().getText());
+        String name = ctx.T_LABEL().getText();
+        SectionNode section = new SectionNode(name);
 
         for (CvDslParser.ContentContext c : ctx.content()) {
             section.add(visit(c));
         }
 
+        if (name.equals("Personal_Info")) {
+            validatePersonalInfo(ctx);
+        }
+
         return section;
     }
+
+    private void validatePersonalInfo(CvDslParser.SectionContext ctx) {
+        boolean hasName = false;
+        boolean hasEmail = false;
+
+        for (CvDslParser.ContentContext c : ctx.content()) {
+            if (c.pair() != null) {
+                String key = stripKey(c.pair().T_KEY().getText());
+                if (key.equals("NAME")) hasName = true;
+                if (key.equals("EMAIL")) hasEmail = true;
+            }
+        }
+
+        if (!hasName) {
+            reportError(ctx, "Sekcja \"Personal_Info\": brakuje wymaganego pola NAME");
+        }
+        if (!hasEmail) {
+            reportError(ctx, "Sekcja \"Personal_Info\": brakuje wymaganego pola EMAIL");
+        }
+    }
+
+    private void reportError(org.antlr.v4.runtime.ParserRuleContext ctx, String message) {
+        System.err.printf("%s:%d:%d: error: %s%n",
+                filePath,
+                ctx.getStart().getLine(),
+                ctx.getStart().getCharPositionInLine() + 1,
+                message);
+    }
+
     @Override
     public Node visitPair(CvDslParser.PairContext ctx) {
 
@@ -82,7 +131,8 @@ public class CvBuilder extends CvDslBaseVisitor<Node> {
         return new FieldNode(key, list);
     }
     @Override
-    public Node visitObject_block(CvDslParser.Object_blockContext ctx) {ObjectNode obj = new ObjectNode();
+    public Node visitObject_block(CvDslParser.Object_blockContext ctx) {
+        ObjectNode obj = new ObjectNode();
 
         for (CvDslParser.ContentContext c : ctx.content()) {
             Node node = visit(c);
