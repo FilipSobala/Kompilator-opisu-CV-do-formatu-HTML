@@ -18,12 +18,13 @@
 
 ## 🛠️ Środowisko developerskie — co dodaliśmy do projektu
 
-Oprócz samego kompilatora (Lexer/Parser/Visitor generowanych przez ANTLR), w ramach projektu stworzyliśmy **kompletne środowisko pracy w VS Code** dla języka CvDsl. Składa się ono z dwóch niezależnych elementów:
+Oprócz samego kompilatora (Lexer/Parser/Visitor generowanych przez ANTLR), w ramach projektu stworzyliśmy **kompletne środowisko pracy w VS Code** dla języka CvDsl. Składa się ono z trzech elementów:
 
 1. **Własne rozszerzenie VS Code (`cvdsl`)** — instalowane jednorazowo, daje edytorowi "świadomość" języka CvDsl (kolory, wcięcia, szablony).
-2. **Automatyzacja budowy (Maven Task)** — wbudowana w projekt, pozwala jednym poleceniem skompilować i podglądnąć CV.
+2. **Automatyzacja budowy (Maven Task + skrót klawiszowy)** — wbudowana w projekt, pozwala jednym klawiszem skompilować i podglądnąć CV.
+3. **Zestaw przykładowych plików `.cv`** — gotowe demo pokazujące pełne możliwości języka w trzech różnych stylach.
 
-Razem dają efekt: piszesz `.cv` z pełnym kolorowaniem i podpowiedziami → jedno polecenie → gotowy HTML/PDF otwiera się sam w przeglądarce.
+Razem dają efekt: piszesz `.cv` z pełnym kolorowaniem i podpowiedziami → jeden klawisz → gotowy HTML/PDF otwiera się sam w przeglądarce.
 
 ---
 
@@ -104,7 +105,7 @@ Drugi element środowiska to **VS Code Task**, który łączy edycję pliku `.cv
 ### Jak to wygląda w użyciu?
 
 1. Otwórz w VS Code dowolny plik `.cv` (np. `test.cv`) i ustaw go jako aktywną zakładkę
-2. Naciśnij `Ctrl+Shift+P` → wpisz **`Run Task`** → wybierz **„Generuj CV z bieżącego pliku”**
+2. Naciśnij **`F6`** (na laptopach z klawiszami funkcyjnymi multimedialnymi: **`Fn+F6`**) — albo `Ctrl+Shift+P` → `Run Task` → **„Generuj CV z bieżącego pliku”**
 3. Maven kompiluje projekt i odpala `Main.java` z argumentem będącym ścieżką do **aktualnie otwartego pliku** (`${file}`)
 4. Kompilator:
    - parsuje plik (Lexer + Parser + Visitor z ANTLR)
@@ -120,10 +121,12 @@ Drugi element środowiska to **VS Code Task**, który łączy edycję pliku `.cv
 | `Main.java` | Po zapisie `output.html` dodano `Desktop.getDesktop().browse(outputPath.toUri())` | Automatyczne otwarcie wyniku w przeglądarce — bez tego trzeba było ręcznie szukać pliku w eksploratorze |
 | `pom.xml` | Dodano plugin `org.codehaus.mojo:exec-maven-plugin` z ustawioną klasą główną `org.example.Main` | Pozwala odpalić `Main` jedną komendą Mavena (`mvn compile exec:java -Dexec.args=...`), bez ręcznego budowania classpath |
 | `.vscode/tasks.json` | Nowy task **„Generuj CV z bieżącego pliku”**, typ `process`, wywołujący `mvn.cmd` z `-Dexec.args=${file}` | Spina wszystko w jedną akcję dostępną z palety komend (`Ctrl+Shift+P` → `Run Task`) |
+| `keybindings.json` | Skrót **`F6`** (na niektórych laptopach `Fn+F6`) powiązany z taskiem „Generuj CV z bieżącego pliku”, aktywny tylko gdy edytowany jest plik `.cv` | Generowanie CV jednym naciśnięciem klawisza, bez przechodzenia przez palety komend |
+| `.gitignore` | Wykluczono `target/`, `*.class`, `output.html`, `output.pdf`, `*.vsix`, `.vscode/launch.json` | Repozytorium nie zaśmieca się plikami wygenerowanymi i lokalnymi konfiguracjami — dobra praktyka przy pracy zespołowej |
 
 ### Wymagania / konfiguracja workspace
 
-Aby task był widoczny w VS Code, jako **główny folder okna** (workspace root) musi być otwarty folder nadrzędny:
+Aby task i skrót `F6` były widoczne w VS Code, jako **główny folder okna** (workspace root) musi być otwarty folder nadrzędny:
 
 ```
 Kompilator-opisu-CV-do-formatu-HTML/
@@ -134,6 +137,49 @@ Kompilator-opisu-CV-do-formatu-HTML/
 
 (folder zawierający i `cvdsl`, i `Kompilator_CV_do_HTML`)
 
+#### `.gitignore` (folder główny projektu)
+
+```gitignore
+# Java / Maven
+target/
+*.class
+
+# Wygenerowane pliki CV
+output.html
+output.pdf
+
+# VS Code
+.vscode/launch.json
+*.vsix
+```
+
+#### `.vscode/keybindings.json` (skrót F6)
+
+```jsonc
+[
+    {
+        "key": "f6",
+        "command": "workbench.action.tasks.runTask",
+        "args": "Generuj CV z bieżącego pliku",
+        "when": "editorTextFocus && resourceExtname == '.cv'"
+    }
+]
+```
+
+---
+
+## 📁 Część 3 — Przykładowe pliki .cv (gotowe demo)
+
+W `src/main/resources/` przygotowaliśmy **trzy kompletne, realistyczne CV**, każde wykorzystujące inny wariant konfiguracji (`CONFIG`) — żeby na jednym i tym samym kompilatorze pokazać kilka różnych stylów wynikowego dokumentu. Wszystkie trzy pliki wykorzystują **pełny zestaw konstrukcji języka**: sekcje, listy obiektów (`object_list`), listy wypunktowane (`bullet_list`), listy w `[ ]`, bloki wieloliniowe `"""..."""`, daty, `PRESENT`/`NOW`, adresy URL, e-mail, telefon i liczby.
+
+| Plik | Motyw / `CONFIG` | Co pokazuje |
+| :--- | :--- | :--- |
+| `example_light.cv` | `THEME: "Modern-Light"`, `ACCENT_COLOR: "#2196F3"`, `SHOW_PHOTO: TRUE`, `EXPORT_PDF: TRUE` | Pełne CV (Anna Kowalska, Frontend Developer) — jasny motyw, zdjęcie, eksport do PDF |
+| `example_dark.cv` | `THEME: "Modern-Dark"`, `ACCENT_COLOR: "#4CAF50"`, `SHOW_PHOTO: TRUE`, `EXPORT_PDF: TRUE` | Pełne CV (Filip Sobala) — ciemny motyw, zdjęcie, eksport do PDF |
+| `example_minimal.cv` | `THEME: "Minimal"`, `ACCENT_COLOR: "#9C27B0"`, `SHOW_PHOTO: FALSE`, `EXPORT_PDF: FALSE`, `LANG: "EN"` | Skrócone CV po angielsku (Marcus Webb, Data Analyst) — wersja minimalistyczna, bez zdjęcia, bez PDF |
+
+**Efekt praktyczny na prezentacji:** otwierasz po kolei każdy plik i naciskasz `F6`/`Fn+F6` — przeglądarka pokazuje 3 różne, sensowne CV w 3 różnych stylach, mimo że **kompilator i gramatyka są identyczne**. To najlepszy dowód, że `CONFIG` realnie steruje wyglądem strony wynikowej, a logika tłumaczenia DSL→HTML jest od tego niezależna.
+
 ---
 
 ## 📋 Ściągawka na prezentację — co warto pokazać
@@ -142,8 +188,9 @@ Kompilator-opisu-CV-do-formatu-HTML/
 2. **Napisać nową sekcję snippetem** — wpisać `section` + `Tab`, albo `experience` + `Tab` i pokazać jak szybko wypełnia się strukturę
 3. **Zwinąć/rozwinąć sekcję** — kliknąć strzałkę foldingu przy `SECTION ... {`
 4. **Zakomentować linię** `Ctrl+/` — pokazać że wstawia `#` (zgodnie z `T_COMMENT` z gramatyki)
-5. **Odpalić task „Generuj CV z bieżącego pliku”** → poczekać aż Maven skompiluje → przeglądarka sama otworzy `output.html`
-6. (Opcjonalnie) zmienić coś w `.cv` (np. `ACCENT_COLOR`), ponownie odpalić task i pokazać że HTML się zaktualizował
+5. **Nacisnąć `F6`/`Fn+F6`** na `test.cv` → poczekać aż Maven skompiluje → przeglądarka sama otworzy `output.html`
+6. **Przełączyć się na `example_light.cv` / `example_dark.cv` / `example_minimal.cv`** i dla każdego nacisnąć `F6` — pokazać 3 różne style wygenerowane przez ten sam kompilator
+7. (Opcjonalnie) zmienić coś w `.cv` (np. `ACCENT_COLOR`), ponownie nacisnąć `F6` i pokazać że HTML się zaktualizował na żywo
 
 ---
 

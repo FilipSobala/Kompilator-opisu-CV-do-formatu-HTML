@@ -1,0 +1,54 @@
+CV_START
+
+CONFIG {
+    LANG: "EN"
+    THEME: "Minimal"
+    SHOW_PHOTO: FALSE
+    ACCENT_COLOR: "#9C27B0"
+    EXPORT_PDF: FALSE
+}
+
+SECTION Personal_Info {
+    NAME: "Marcus Webb"
+    ROLE: "Data Analyst"
+    EMAIL: marcus.webb@example.com
+    PHONE: +1 415 555 0134
+}
+
+SECTION Profile {
+    SUMMARY: """
+    Data analyst focused on turning messy spreadsheets into clear,
+    actionable dashboards. Comfortable working independently and
+    explaining results to non-technical stakeholders.
+    """
+}
+
+SECTION Experience {
+    WORK_HISTORY: [
+        {
+            COMPANY: "Northwind Logistics"
+            POSITION: "Data Analyst"
+            START_DATE: 2023-01
+            END_DATE: NOW
+            IS_REMOTE: TRUE
+            RESPONSIBILITIES:
+                - "Built weekly KPI dashboards in Power BI for 5 regional teams."
+                - "Automated data cleaning pipeline, cutting reporting time by 60%."
+            TECH_STACK: ["Python", "Pandas", "Power BI", "SQL"]
+        }
+    ]
+}
+
+SECTION Skills {
+    PROGRAMMING: ["Python", "SQL", "R"]
+    TOOLS: ["Power BI", "Excel", "Git"]
+}
+
+SECTION Clauses {
+    RODO: """
+    I consent to the processing of my personal data for the purposes
+    of this recruitment process.
+    """
+}
+
+CV_END

@@ -1,0 +1,109 @@
+CV_START
+
+CONFIG {
+    LANG: "PL"
+    THEME: "Modern-Light"
+    SHOW_PHOTO: TRUE
+    ACCENT_COLOR: "#2196F3"
+    EXPORT_PDF: TRUE
+}
+
+SECTION Personal_Info {
+    NAME: "Anna Kowalska"
+    ROLE: "Frontend Developer"
+    EMAIL: anna.kowalska@example.com
+    PHONE: +48 600 111 222
+}
+
+SECTION Profile {
+    SUMMARY: """
+    Frontend developerka z 4-letnim doświadczeniem w budowaniu
+    responsywnych aplikacji webowych. Skupiona na dostępności (a11y)
+    i wydajności renderowania. Aktywna uczestniczka lokalnych meetupów React.
+    """
+}
+
+SECTION Experience {
+    WORK_HISTORY: [
+        {
+            COMPANY: "Allegro"
+            POSITION: "Frontend Developer"
+            START_DATE: 2022-09
+            END_DATE: PRESENT
+            IS_REMOTE: TRUE
+            RESPONSIBILITIES:
+                - "Rozwój komponentów w React i TypeScript dla panelu sprzedawcy."
+                - "Wdrożenie design systemu, redukcja duplikacji kodu CSS o 40%."
+                - "Mentoring dwóch junior developerów."
+            TECH_STACK: ["React", "TypeScript", "Vite", "Storybook"]
+        },
+        {
+            COMPANY: "Codecool"
+            POSITION: "Junior Frontend Developer"
+            START_DATE: 2021-03
+            END_DATE: 2022-08
+            IS_REMOTE: FALSE
+            RESPONSIBILITIES:
+                - "Tworzenie statycznych landing page'y dla klientów edukacyjnych."
+                - "Integracja z REST API oraz Google Analytics."
+            TECH_STACK: ["JavaScript", "HTML", "CSS", "WordPress"]
+        }
+    ]
+}
+
+SECTION Education {
+    DEGREES: [
+        {
+            UNIVERSITY: "Uniwersytet Warszawski"
+            FACULTY: "Wydział Matematyki, Informatyki i Mechaniki"
+            DEGREE: "Licencjat Informatyki"
+            START_YEAR: 2018
+            END_YEAR: 2021
+            ACHIEVEMENTS:
+                - "Praca licencjacka z zakresu interfejsów użytkownika."
+                - "Udział w kole naukowym UX/UI."
+        }
+    ]
+}
+
+SECTION Skills {
+    PROGRAMMING: ["JavaScript", "TypeScript", "HTML", "CSS", "SQL"]
+    TOOLS: ["Git", "Figma", "Webpack", "Jest", "Cypress"]
+
+    LANGUAGES: [
+        {
+            LANGUAGE: "Angielski"
+            LEVEL_NAME: "C1 (Advanced)"
+            PROFICIENCY: 5
+        },
+        {
+            LANGUAGE: "Francuski"
+            LEVEL_NAME: "B1 (Intermediate)"
+            PROFICIENCY: 3
+        }
+    ]
+}
+
+SECTION Projects {
+    OPEN_SOURCE: [
+        {
+            NAME: "a11y-checklist"
+            URL: https://github.com/annakowalska/a11y-checklist
+            IS_ACTIVE: TRUE
+            STARS: 47
+            DESCRIPTION: """
+            Lista kontrolna i zestaw skryptów do automatycznego sprawdzania
+            podstawowych wymagań dostępności (WCAG 2.1 AA) w projektach React.
+            """
+        }
+    ]
+}
+
+SECTION Clauses {
+    RODO: """
+    Wyrażam zgodę na przetwarzanie moich danych osobowych dla potrzeb
+    niezbędnych do realizacji procesu rekrutacji.
+    """
+}
+
+CV_END
