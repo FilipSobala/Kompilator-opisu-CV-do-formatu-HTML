@@ -4,6 +4,8 @@
 * **Filip Sobala** fsobala@student.agh.edu.pl
 * **Bartłomiej Przytuła** bartprzyt@student.agh.edu.pl
 
+---
+
 # CvDsl — Autorski język opisu CV
 
 ## 1. Założenia Projektu
@@ -16,15 +18,77 @@
 
 ---
 
+## 🏗️ Architektura kompilatora — wzorzec Visitor i drzewo `Node`
+
+Serce kompilatora to klasyczny potok **Lexer → Parser → AST → Generator wyjścia**, zaimplementowany przy pomocy wzorca projektowego **Visitor**, w pełni wygenerowanego i wspieranego przez ANTLR v4.
+
+### Przepływ danych
+
+```
+plik .cv
+   │
+   ▼
+CvDslLexer        (generowany przez ANTLR z CvDsl.g4)
+   │  strumień tokenów (T_SECTION, T_KEY, T_STRING, ...)
+   ▼
+CvDslParser       (generowany przez ANTLR z CvDsl.g4)
+   │  drzewo rozbioru (ParseTree)
+   ▼
+CvBuilder         (implementacja CvDslBaseVisitor<Node>)
+   │  drzewo obiektów Node (AST naszego DSL)
+   ▼
+Cv.toHtml()       (rekurencyjne wywołania toHtml() na drzewie)
+   │
+   ▼
+output_<nazwa>.html  (+ output_<nazwa>.pdf jeśli EXPORT_PDF: TRUE)
+```
+
+`CvBuilder` odwiedza drzewo rozbioru wygenerowane przez ANTLR (`ParseTree`) i dla każdego węzła gramatyki (`cv_document`, `section`, `pair`, `list_field`, `object_block`, ...) tworzy odpowiadający mu obiekt z **własnej hierarchii klas `Node`** — czyli drugie, "nasze" drzewo (AST), niezależne od wewnętrznej reprezentacji ANTLR. To na tym drugim drzewie operuje cała dalsza logika: generowanie HTML, CSS i PDF.
+
+### Hierarchia klas `Node`
+
+Wszystko w drzewie wynikowym implementuje jeden, bardzo prosty interfejs:
+
+```java
+public interface Node {
+    String toHtml();
+}
+```
+
+Dzięki temu **każdy element CV — od całego dokumentu, przez sekcję, po pojedyncze pole — wie, jak wyrenderować samego siebie do HTML**. Generowanie strony to po prostu rekurencyjne wywołanie `toHtml()` na korzeniu drzewa, które kaskadowo wywołuje `toHtml()` na wszystkich elementach potomnych.
+
+| Klasa | Reprezentuje | Przykład z `.cv` |
+| :--- | :--- | :--- |
+| **`Cv`** | Cały dokument CV — korzeń drzewa. Przechowuje `ConfigNode` oraz listę sekcji `SectionNode`. To tutaj generowany jest cały szkielet HTML (`<html>`, `<head>`, style CSS zależne od `THEME`/`ACCENT_COLOR`) | Cały plik `.cv` od `CV_START` do `CV_END` |
+| **`ConfigNode`** | Blok globalnej konfiguracji — lista par klucz-wartość steruje wygenerowanym CSS (kolory, motyw jasny/ciemny, widoczność zdjęcia, eksport PDF) | `CONFIG { LANG: "PL" THEME: "Modern-Dark" ... }` |
+| **`SectionNode`** | Pojedyncza sekcja CV — ma nazwę i listę zawartości (`pair`, `list_field`, `object_list`, `bullet_list`). Renderuje się jako `<section><h2>Nazwa</h2>...</section>` | `SECTION Experience { ... }` |
+| **`FieldNode`** | Pojedyncze pole klucz–wartość. Renderuje się jako `<div class="field"><span class="key">KLUCZ</span>WARTOŚĆ</div>` | `NAME: "Filip Sobala"` |
+| **`ValueNode`** *(klasa abstrakcyjna)* | Wspólny przodek dla wszystkich możliwych typów wartości pola — pozwala przechowywać w jednej liście (np. `ListNode`) wartości różnych typów (stringi, liczby, obiekty, booleany) | — |
+| **`StringNode`** | Wartość tekstowa — string, multiline `"""..."""`, URL, e-mail, telefon, data, `PRESENT`/`NOW` (wszystkie reprezentowane jako tekst) | `"Senior Java Engineer"`, `https://github.com/...` |
+| **`NumberNode`** | Wartość liczbowa | `PROFICIENCY: 5` |
+| **`BooleanNode`** | Wartość logiczna `TRUE`/`FALSE` | `IS_REMOTE: TRUE` |
+| **`ListNode`** | Lista wartości — renderuje się jako `<ul><li>...</li></ul>`. Może zawierać dowolny `ValueNode`, w tym `ObjectNode` | `TECH_STACK: ["Java 21", "ANTLR v4"]`, `RESPONSIBILITIES: - "..." - "..."` |
+| **`ObjectNode`** | Złożony obiekt (np. jeden wpis doświadczenia zawodowego) — lista pól `FieldNode`, renderowana jako `<div class="object">...</div>` z wizualnym wyróżnieniem (kolorowy lewy border, tło karty) | Pojedynczy `{ COMPANY: "Google" POSITION: "..." ... }` w `WORK_HISTORY` |
+
+### Dlaczego to dobre rozwiązanie?
+
+* **Separacja odpowiedzialności** — gramatyka ANTLR (`CvDsl.g4`) odpowiada wyłącznie za rozpoznanie składni, `CvBuilder` za zbudowanie modelu domenowego, a klasy `Node` za prezentację (HTML). Każdą z tych warstw można zmieniać niezależnie — np. dodać generowanie do innego formatu (Markdown, JSON) pisząc tylko nowe implementacje `toHtml()` → `toMarkdown()`, bez dotykania gramatyki czy `CvBuilder`.
+* **Rekurencyjna budowa HTML "za darmo"** — ponieważ `ObjectNode` i `ListNode` same implementują `Node` i mogą zawierać inne `Node`/`ValueNode`, dowolnie zagnieżdżone struktury (lista obiektów, w których każdy obiekt ma pole będące listą) renderują się poprawnie bez żadnego specjalnego kodu — wystarczy że każdy poziom zna tylko swoje dzieci i wywołuje na nich `toHtml()`.
+* **Centralny punkt stylowania** — cały CSS (kolory, layout, motyw) generowany jest w jednym miejscu (`Cv.toHtml()`) na podstawie `ConfigNode`, a poszczególne elementy (`field`, `object`, `section`) używają tylko nazwanych klas CSS — dzięki temu zmiana `ACCENT_COLOR` czy `THEME` w jednym pliku `.cv` zmienia wygląd całego wygenerowanego dokumentu, bez ingerencji w strukturę HTML.
+* **Zgodność z Visitor pattern z ANTLR** — `CvBuilder extends CvDslBaseVisitor<Node>` to standardowy, podręcznikowy wzorzec budowania AST z drzewa rozbioru ANTLR, co czyni kod łatwym do rozszerzenia (nowe typy węzłów gramatyki = nowa metoda `visitXxx` zwracająca nowy `Node`).
+
+---
+
 ## 🛠️ Środowisko developerskie — co dodaliśmy do projektu
 
-Oprócz samego kompilatora (Lexer/Parser/Visitor generowanych przez ANTLR), w ramach projektu stworzyliśmy **kompletne środowisko pracy w VS Code** dla języka CvDsl. Składa się ono z trzech elementów:
+Oprócz samego kompilatora (Lexer/Parser/Visitor generowanych przez ANTLR), w ramach projektu stworzyliśmy **kompletne środowisko pracy w VS Code** dla języka CvDsl. Składa się ono z czterech elementów:
 
 1. **Własne rozszerzenie VS Code (`cvdsl`)** — instalowane jednorazowo, daje edytorowi "świadomość" języka CvDsl (kolory, wcięcia, szablony).
 2. **Automatyzacja budowy (Maven Task + skrót klawiszowy)** — wbudowana w projekt, pozwala jednym klawiszem skompilować i podglądnąć CV.
 3. **Zestaw przykładowych plików `.cv`** — gotowe demo pokazujące pełne możliwości języka w trzech różnych stylach.
+4. **Obsługa błędów składniowych i semantycznych z integracją w edytorze** — błędy w pliku `.cv` pojawiają się jako czerwone podkreślenia i wpisy w panelu Problems, klikalne i z numerem linii.
 
-Razem dają efekt: piszesz `.cv` z pełnym kolorowaniem i podpowiedziami → jeden klawisz → gotowy HTML/PDF otwiera się sam w przeglądarce.
+Razem dają efekt: piszesz `.cv` z pełnym kolorowaniem i podpowiedziami → jeden klawisz → gotowy HTML/PDF otwiera się sam w przeglądarce, a jeśli coś jest nie tak — widzisz to od razu w edytorze.
 
 ---
 
@@ -109,20 +173,21 @@ Drugi element środowiska to **VS Code Task**, który łączy edycję pliku `.cv
 3. Maven kompiluje projekt i odpala `Main.java` z argumentem będącym ścieżką do **aktualnie otwartego pliku** (`${file}`)
 4. Kompilator:
    - parsuje plik (Lexer + Parser + Visitor z ANTLR)
-   - generuje `output.html`
-   - jeśli w `CONFIG` ustawiono `EXPORT_PDF: TRUE` — generuje też `output.pdf`
-5. **`output.html` automatycznie otwiera się w domyślnej przeglądarce** — bez klikania w plik w eksploratorze
+   - generuje plik HTML o nazwie zależnej od pliku wejściowego, np. `output_test.html` dla `test.cv`
+   - jeśli w `CONFIG` ustawiono `EXPORT_PDF: TRUE` — generuje też odpowiadający plik PDF (np. `output_test.pdf`)
+5. **Wygenerowany plik HTML automatycznie otwiera się w domyślnej przeglądarce** — bez klikania w plik w eksploratorze
 
 ### Co zostało do tego zmienione w kodzie projektu?
 
 | Plik | Zmiana | Dlaczego |
 | :--- | :--- | :--- |
 | `Main.java` | Ścieżka pliku wejściowego brana jest z argumentu programu: `args.length > 0 ? args[0] : "src/main/resources/test.cv"` | Pozwala kompilatorowi przetwarzać **dowolny** plik `.cv`, a nie tylko jeden zahardkodowany |
-| `Main.java` | Po zapisie `output.html` dodano `Desktop.getDesktop().browse(outputPath.toUri())` | Automatyczne otwarcie wyniku w przeglądarce — bez tego trzeba było ręcznie szukać pliku w eksploratorze |
+| `Main.java` | Nazwa wynikowego pliku jest wyliczana z nazwy pliku wejściowego: `output_<nazwa>.html` / `output_<nazwa>.pdf` | Każdy plik `.cv` ma swój własny, niezależny output — łatwo trzymać wiele CV w jednym projekcie bez nadpisywania się |
+| `Main.java` | Po zapisie HTML dodano `Desktop.getDesktop().browse(outputPath.toUri())` | Automatyczne otwarcie wyniku w przeglądarce — bez tego trzeba było ręcznie szukać pliku w eksploratorze |
 | `pom.xml` | Dodano plugin `org.codehaus.mojo:exec-maven-plugin` z ustawioną klasą główną `org.example.Main` | Pozwala odpalić `Main` jedną komendą Mavena (`mvn compile exec:java -Dexec.args=...`), bez ręcznego budowania classpath |
 | `.vscode/tasks.json` | Nowy task **„Generuj CV z bieżącego pliku”**, typ `process`, wywołujący `mvn.cmd` z `-Dexec.args=${file}` | Spina wszystko w jedną akcję dostępną z palety komend (`Ctrl+Shift+P` → `Run Task`) |
 | `keybindings.json` | Skrót **`F6`** (na niektórych laptopach `Fn+F6`) powiązany z taskiem „Generuj CV z bieżącego pliku”, aktywny tylko gdy edytowany jest plik `.cv` | Generowanie CV jednym naciśnięciem klawisza, bez przechodzenia przez palety komend |
-| `.gitignore` | Wykluczono `target/`, `*.class`, `output.html`, `output.pdf`, `*.vsix`, `.vscode/launch.json` | Repozytorium nie zaśmieca się plikami wygenerowanymi i lokalnymi konfiguracjami — dobra praktyka przy pracy zespołowej |
+| `.gitignore` | Wykluczono `target/`, `*.class`, `output*.html`, `output*.pdf`, `*.vsix`, `.vscode/launch.json` | Repozytorium nie zaśmieca się plikami wygenerowanymi i lokalnymi konfiguracjami — dobra praktyka przy pracy zespołowej |
 
 ### Wymagania / konfiguracja workspace
 
@@ -145,8 +210,8 @@ target/
 *.class
 
 # Wygenerowane pliki CV
-output.html
-output.pdf
+output*.html
+output*.pdf
 
 # VS Code
 .vscode/launch.json
@@ -168,7 +233,134 @@ output.pdf
 
 ---
 
-## 📁 Część 3 — Przykładowe pliki .cv (gotowe demo)
+## 🚨 Część 3 — Obsługa błędów: czerwone podkreślenia w edytorze
+
+Trzeci element środowiska to integracja błędów kompilatora z edytorem VS Code. Zarówno **błędy składniowe** (wykrywane przez ANTLR), jak i **błędy semantyczne** (wykrywane przez nasz kod w `CvBuilder`) są wypisywane w jednym, ustandaryzowanym formacie i przechwytywane przez VS Code jako czerwone podkreślenia w edytorze oraz wpisy w panelu **Problems** (`Ctrl+Shift+M`), klikalne i prowadzące do konkretnej linii.
+
+### 3.1 Błędy składniowe — `CvErrorListener`
+
+Domyślnie ANTLR wypisuje błędy składniowe do konsoli w formacie nieczytelnym dla VS Code (np. `line 5:3 mismatched input...`). Stworzyliśmy własną klasę `CvErrorListener`, podpiętą zarówno do lexera, jak i parsera, która formatuje każdy błąd jako:
+
+```
+<ścieżka_do_pliku>:<linia>:<kolumna>: error: <komunikat>
+```
+
+```java
+package org.example;
+
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+
+public class CvErrorListener extends BaseErrorListener {
+
+    private final String filePath;
+
+    public CvErrorListener(String filePath) {
+        this.filePath = filePath;
+    }
+
+    @Override
+    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+                             int line, int charPositionInLine, String msg,
+                             RecognitionException e) {
+        System.err.printf("%s:%d:%d: error: %s%n",
+                filePath, line, charPositionInLine + 1, msg);
+    }
+}
+```
+
+Podpięcie w `Main.java`:
+
+```java
+CvDslLexer lexer = new CvDslLexer(input);
+lexer.removeErrorListeners();
+lexer.addErrorListener(new CvErrorListener(filePath));
+
+CvDslParser parser = new CvDslParser(tokens);
+parser.removeErrorListeners();
+parser.addErrorListener(new CvErrorListener(filePath));
+```
+
+**Przykład:** brak `}` zamykającego sekcję → w edytorze pojawia się czerwone podkreślenie w odpowiedniej linii, a w panelu Problems wpis typu `mismatched input '<EOF>' expecting '}'`.
+
+### 3.2 Błędy semantyczne — walidacja w `CvBuilder`
+
+Sam parser sprawdza tylko, czy plik jest *poprawny gramatycznie* — nie wie nic o sensie dokumentu. Dlatego w `CvBuilder` dodaliśmy dodatkowe sprawdzenia, które używają **tego samego formatu błędów** (`plik:linia:kolumna: error: ...`), dzięki czemu trafiają do tego samego panelu Problems:
+
+* **Zduplikowana sekcja** — jeśli w dokumencie dwa razy pojawia się `SECTION` o tej samej nazwie (np. dwa razy `Experience`), zgłaszany jest błąd `Zduplikowana sekcja: "Experience"`
+* **Wymagane pola w `Personal_Info`** — sekcja `Personal_Info` musi zawierać pola `NAME` i `EMAIL`; jeśli któregoś brakuje, zgłaszany jest błąd `Sekcja "Personal_Info": brakuje wymaganego pola NAME` (analogicznie dla `EMAIL`)
+
+```java
+private void validatePersonalInfo(CvDslParser.SectionContext ctx) {
+    boolean hasName = false;
+    boolean hasEmail = false;
+
+    for (CvDslParser.ContentContext c : ctx.content()) {
+        if (c.pair() != null) {
+            String key = stripKey(c.pair().T_KEY().getText());
+            if (key.equals("NAME")) hasName = true;
+            if (key.equals("EMAIL")) hasEmail = true;
+        }
+    }
+
+    if (!hasName) {
+        reportError(ctx, "Sekcja \"Personal_Info\": brakuje wymaganego pola NAME");
+    }
+    if (!hasEmail) {
+        reportError(ctx, "Sekcja \"Personal_Info\": brakuje wymaganego pola EMAIL");
+    }
+}
+
+private void reportError(org.antlr.v4.runtime.ParserRuleContext ctx, String message) {
+    System.err.printf("%s:%d:%d: error: %s%n",
+            filePath,
+            ctx.getStart().getLine(),
+            ctx.getStart().getCharPositionInLine() + 1,
+            message);
+}
+```
+
+Każdy `ParserRuleContext` z ANTLR niesie informację o tym, w której linii i kolumnie się zaczyna (`getStart().getLine()`, `getStart().getCharPositionInLine()`) — dzięki temu błąd semantyczny wskazuje **konkretne miejsce w pliku `.cv`**, mimo że plik jest składniowo w 100% poprawny.
+
+### 3.3 Problem Matcher — most między konsolą Mavena a edytorem
+
+Aby VS Code "zrozumiał" linie błędów wypisywane przez `CvErrorListener` i walidację semantyczną, w `.vscode/tasks.json` zdefiniowano `problemMatcher` z wyrażeniem regularnym dopasowującym nasz format:
+
+```json
+"problemMatcher": {
+    "owner": "cvdsl",
+    "fileLocation": ["absolute"],
+    "pattern": {
+        "regexp": "^(.*):(\\d+):(\\d+): error: (.*)$",
+        "file": 1,
+        "line": 2,
+        "column": 3,
+        "message": 4
+    }
+}
+```
+
+Dzięki temu każde naciśnięcie `F6` powoduje, że Maven wypisuje błędy w konsoli, a VS Code automatycznie:
+- podkreśla odpowiednią linię w pliku `.cv` na czerwono,
+- dodaje wpis do panelu **Problems** z treścią błędu,
+- pozwala kliknąć wpis i przeskoczyć do dokładnego miejsca błędu.
+
+### Co zostało do tego zmienione w kodzie projektu?
+
+| Plik | Zmiana | Dlaczego |
+| :--- | :--- | :--- |
+| `CvErrorListener.java` *(nowy plik)* | Klasa formatująca błędy ANTLR jako `plik:linia:kolumna: error: komunikat` | Wspólny, ustandaryzowany format błędów rozumiany przez Problem Matcher |
+| `Main.java` | Podpięcie `CvErrorListener` do lexera i parsera (`removeErrorListeners()` + `addErrorListener(...)`) | Zastąpienie domyślnych, nieczytelnych komunikatów ANTLR naszym formatem |
+| `Main.java` | `CvBuilder` przyjmuje teraz `filePath` w konstruktorze (`new CvBuilder(filePath)`) | Umożliwia walidacji semantycznej zgłaszanie błędów z poprawną ścieżką do pliku |
+| `CvBuilder.java` | Dodano `Set<String> sectionNames` do wykrywania duplikatów sekcji oraz metody `validatePersonalInfo(...)` i `reportError(...)` | Walidacja semantyczna (duplikaty sekcji, wymagane pola `NAME`/`EMAIL` w `Personal_Info`) w tym samym formacie co błędy składniowe |
+| `.vscode/tasks.json` | Rozbudowano `problemMatcher` z `[]` na obiekt z regexem `^(.*):(\\d+):(\\d+): error: (.*)$` | Pozwala VS Code parsować output Mavena i pokazywać błędy jako podkreślenia/Problems |
+
+> **Uwaga:** podkreślenia pojawiają się **po naciśnięciu `F6`** (czyli po kompilacji), nie w trakcie pisania na żywo. Pełne "live" podkreślanie wymagałoby napisania osobnego Language Servera (LSP) — to świadomie pominięty, znacznie większy temat.
+
+---
+
+## 📁 Część 4 — Przykładowe pliki .cv (gotowe demo)
 
 W `src/main/resources/` przygotowaliśmy **trzy kompletne, realistyczne CV**, każde wykorzystujące inny wariant konfiguracji (`CONFIG`) — żeby na jednym i tym samym kompilatorze pokazać kilka różnych stylów wynikowego dokumentu. Wszystkie trzy pliki wykorzystują **pełny zestaw konstrukcji języka**: sekcje, listy obiektów (`object_list`), listy wypunktowane (`bullet_list`), listy w `[ ]`, bloki wieloliniowe `"""..."""`, daty, `PRESENT`/`NOW`, adresy URL, e-mail, telefon i liczby.
 
@@ -178,19 +370,7 @@ W `src/main/resources/` przygotowaliśmy **trzy kompletne, realistyczne CV**, ka
 | `example_dark.cv` | `THEME: "Modern-Dark"`, `ACCENT_COLOR: "#4CAF50"`, `SHOW_PHOTO: TRUE`, `EXPORT_PDF: TRUE` | Pełne CV (Filip Sobala) — ciemny motyw, zdjęcie, eksport do PDF |
 | `example_minimal.cv` | `THEME: "Minimal"`, `ACCENT_COLOR: "#9C27B0"`, `SHOW_PHOTO: FALSE`, `EXPORT_PDF: FALSE`, `LANG: "EN"` | Skrócone CV po angielsku (Marcus Webb, Data Analyst) — wersja minimalistyczna, bez zdjęcia, bez PDF |
 
-**Efekt praktyczny na prezentacji:** otwierasz po kolei każdy plik i naciskasz `F6`/`Fn+F6` — przeglądarka pokazuje 3 różne, sensowne CV w 3 różnych stylach, mimo że **kompilator i gramatyka są identyczne**. To najlepszy dowód, że `CONFIG` realnie steruje wyglądem strony wynikowej, a logika tłumaczenia DSL→HTML jest od tego niezależna.
-
----
-
-## 📋 Ściągawka na prezentację — co warto pokazać
-
-1. **Otworzyć plik `.cv`** → pokazać kolorowanie (porównać np. z plikiem `.txt` — bez kolorów)
-2. **Napisać nową sekcję snippetem** — wpisać `section` + `Tab`, albo `experience` + `Tab` i pokazać jak szybko wypełnia się strukturę
-3. **Zwinąć/rozwinąć sekcję** — kliknąć strzałkę foldingu przy `SECTION ... {`
-4. **Zakomentować linię** `Ctrl+/` — pokazać że wstawia `#` (zgodnie z `T_COMMENT` z gramatyki)
-5. **Nacisnąć `F6`/`Fn+F6`** na `test.cv` → poczekać aż Maven skompiluje → przeglądarka sama otworzy `output.html`
-6. **Przełączyć się na `example_light.cv` / `example_dark.cv` / `example_minimal.cv`** i dla każdego nacisnąć `F6` — pokazać 3 różne style wygenerowane przez ten sam kompilator
-7. (Opcjonalnie) zmienić coś w `.cv` (np. `ACCENT_COLOR`), ponownie nacisnąć `F6` i pokazać że HTML się zaktualizował na żywo
+**Efekt praktyczny na prezentacji:** otwierasz po kolei każdy plik i naciskasz `F6`/`Fn+F6` — przeglądarka pokazuje 3 różne, sensowne CV w 3 różnych stylach (każdy zapisany do osobnego pliku `output_<nazwa>.html`), mimo że **kompilator i gramatyka są identyczne**. To najlepszy dowód, że `CONFIG` realnie steruje wyglądem strony wynikowej, a logika tłumaczenia DSL→HTML jest od tego niezależna.
 
 ---
 
