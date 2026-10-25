@@ -9,3 +9,5 @@ output.pdf
 # VS Code
 .vscode/launch.json
 *.vsix
+# IntelliJ build output
+out/
