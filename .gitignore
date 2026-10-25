@@ -11,3 +11,6 @@ output.pdf
 *.vsix
 # IntelliJ build output
 out/
+
+# IntelliJ
+*.iml

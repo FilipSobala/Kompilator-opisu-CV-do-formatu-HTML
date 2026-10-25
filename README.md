@@ -61,6 +61,12 @@ CV_END
 - **Snippets:** `cvdoc`, `section`, `field`, `bullets`, `objlist`, `multiline`, `experience`.
 - **One-key build:** a VS Code task bound to `F6` compiles the currently open `.cv` file with Maven and opens the generated HTML in the browser.
 
+Install the extension (source in `cvdsl/`):
+```bash
+code --install-extension cvdsl/cvdsl-0.0.1.vsix
+```
+Example inputs: `test.cv`, `test1.cv`, `test2.cv`.
+
 ## Language reference
 **Tokens:** `CV_START`/`CV_END`, `CONFIG`, `SECTION`, `IMPORT`, keys (`NAME:`), strings, multiline `"""..."""`, dates (`2024-07`), `PRESENT`/`NOW`, URLs, e-mails, phone numbers, numbers, `TRUE`/`FALSE`, `#` and `/* */` comments.
 
